@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+
+var browserSync = require('browser-sync'),
+    path = require('path');
+
+var baseDir = path.normalize(__dirname + '/..');
+
+browserSync({
+  files: [
+    path.join(baseDir, 'index.*')
+  ],
+  server: {baseDir: baseDir},
+  startPath: 'index.html'
+});

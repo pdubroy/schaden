@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Schaden</title>
+  <link rel="stylesheet" href="third_party/codemirror.css">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    .CodeMirror {
+      font-size: 16px;
+      height: 100%;
+      line-height: 1.35;
+    }
+    #editor {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <textarea id="editor"></textarea>
+  <script src="third_party/ohm.js"></script>
+  <script src="third_party/codemirror.js"></script>
+  <script src="third_party/underscore.js"></script>
+  <script type="text/ohm-js" src="es5.ohm"></script>
+  <script>
+    function setEditorValueFromLocalStorage(editor, key) {
+      var contents = localStorage.getItem(key);
+      if (contents != null) {
+        editor.setValue(contents);
+      }
+    }
+
+    function evaluate(code) {
+      console.log('>>', code);
+    }
+
+    var markReadOnly = false;
+
+    var editor = CodeMirror.fromTextArea(document.querySelector('textarea'), {
+      lineNumbers: true
+    });
+    editor.setOption('extraKeys', {
+      Enter: function(cm) {
+        evaluate(cm.getLine(cm.lastLine()));
+        markReadOnly = true;
+        return CodeMirror.Pass;
+      }
+    });
+
+    editor.on('changes', function(cm, change) {
+      if (markReadOnly) {
+        markReadOnly = false;
+        var fromPos = {line: 0, ch:0};
+        var toPos = cm.posFromIndex(cm.getValue().length);
+        cm.markText(fromPos, toPos, {readOnly: true});
+      }
+      localStorage.setItem('editorContents', editor.getValue());
+    });
+
+    setEditorValueFromLocalStorage(editor, 'editorContents');
+  </script>
+</body>
+</html>
