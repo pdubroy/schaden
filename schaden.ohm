@@ -1,11 +1,13 @@
 Schaden {
   Program = Expr*
 
-  Expr = List | word
+  Expr = List | atom
 
   List = "[" (~"]" Expr)* "]"
 
-  word = string | number | wordChar+ -- other
+  atom = string | number | word
+
+  word = wordChar+
 
   wordChar = ~(space | "[" | "]") _
 

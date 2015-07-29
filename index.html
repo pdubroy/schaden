@@ -71,7 +71,7 @@
       List: function(open, words, close) {
         return words.value;
       },
-      word_other: function(chars) {
+      word: function(chars) {
         var name = this.interval.contents;
         if (!(name in symbols)) {
           throw new Error("There is no function named '" + name + "'");
