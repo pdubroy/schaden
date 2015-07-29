@@ -1,0 +1,27 @@
+Schaden {
+  Program = word*
+
+  word = string | number | nonWhitespaceChar+ -- other
+
+  nonWhitespaceChar = ~space _
+
+  string
+    = "\"" strChar* "\""
+
+  strChar
+    = escapeChar
+    | ~"\\" ~"\"" ~"\n" _
+
+  escapeChar  (an escape sequence)
+    = "\\\\"                                     -- backslash
+    | "\\\""                                     -- doubleQuote
+    | "\\n"                                      -- lineFeed
+    | "\\r"                                      -- carriageReturn
+    | "\\t"                                      -- tab
+    | "\\u" hexDigit hexDigit hexDigit hexDigit  -- unicodeEscape
+
+	number  (a number)
+    = "-"? digit+
+
+	space += "#" (~"\n" _)* "\n"  -- comment
+}

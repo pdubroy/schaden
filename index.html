@@ -19,12 +19,52 @@
   </style>
 </head>
 <body>
-  <textarea id="editor"></textarea>
+  <textarea id="editor" autofocus></textarea>
   <script src="third_party/ohm.js"></script>
   <script src="third_party/codemirror.js"></script>
   <script src="third_party/underscore.js"></script>
-  <script type="text/ohm-js" src="es5.ohm"></script>
+  <script type="text/ohm-js" src="schaden.ohm"></script>
   <script>
+    var stack = [];
+    var symbols = {
+      pop: function() {
+        stack.pop();
+      },
+      '+': function() {
+        stack.push(stack.pop() + stack.pop());
+      },
+      '-': function() {
+        stack.push(stack.pop() - stack.pop());
+      },
+      '*': function() {
+        stack.push(stack.pop() * stack.pop());
+      },
+      '/': function() {
+        stack.push(stack.pop() / stack.pop());
+      },
+      '.': function() {}
+    };
+
+    var schaden = ohm.grammarFromScriptElement();
+    var semantics = schaden.semantics().addOperation('evaluate', {
+      Program: function(words) {
+        return words.evaluate();
+      },
+      word_other: function(chars) {
+        var name = this.interval.contents;
+        if (!symbols.hasOwnProperty(name)) {
+          throw new Error("There is no function named '" + name + "'");
+        }
+        symbols[name]();
+      },
+      number: function(_, digits) {
+        stack.push(parseInt(this.interval.contents, 10));
+      },
+      string: function(open, chars, close) {
+        stack.push(JSON.parse(this.interval.contents));
+      }
+    });
+
     function setEditorValueFromLocalStorage(editor, key) {
       var contents = localStorage.getItem(key);
       if (contents != null) {
@@ -33,7 +73,13 @@
     }
 
     function evaluate(code) {
-      console.log('>>', code);
+      var result = schaden.match(code);
+      if (!result.succeeded()) {
+        console.error(result.message);
+        return false;
+      }
+      semantics(result).evaluate();
+      console.log(stack);
     }
 
     var markReadOnly = false;
@@ -59,7 +105,7 @@
       localStorage.setItem('editorContents', editor.getValue());
     });
 
-    setEditorValueFromLocalStorage(editor, 'editorContents');
+//    setEditorValueFromLocalStorage(editor, 'editorContents');
   </script>
 </body>
 </html>
