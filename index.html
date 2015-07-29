@@ -27,47 +27,44 @@
   <script>
     var stack = [];
     var symbols = {
-      pop: function(_) {},
-      '+': function(a, b) {
+      dup: function dup(a) {
+        stack.push(a, a);
+      },
+      pop: function pop(_) {},
+      swap: function swap(a, b) {
+        stack.push(b, a);
+      },
+      '+': function plus(a, b) {
         stack.push(a + b);
       },
-      '-': function(a, b) {
+      '-': function minus(a, b) {
         stack.push(a - b);
       },
-      '*': function(a, b) {
+      '*': function times(a, b) {
         stack.push(a * b);
       },
-      '/': function(a, b) {
+      '/': function div(a, b) {
         stack.push(a / b);
       }
     };
 
     var schaden = ohm.grammarFromScriptElement();
-    var semantics = schaden.semantics().addOperation('evaluate', {
-      Program: function(words) {
-        words.evaluate();
+    var semantics = schaden.semantics().addAttribute('value', {
+      List: function(open, words, close) {
+        return words.value;
       },
       word_other: function(chars) {
         var name = this.interval.contents;
         if (!symbols.hasOwnProperty(name)) {
           throw new Error("There is no function named '" + name + "'");
         }
-        var fn = symbols[name];
-        // If there are any parameters, grab them off the stack directly.
-        var args = fn.length > 0 ? stack.slice(-fn.length) : [];
-        if (fn.length > 0) {
-          var args = stack.slice(-fn.length);
-          stack.length -= fn.length;
-          fn.apply(null, args);
-        } else {
-          fn.call(null);
-        }
+        return symbols[name];
       },
       number: function(_, digits) {
-        stack.push(parseInt(this.interval.contents, 10));
+        return parseInt(this.interval.contents, 10);
       },
       string: function(open, chars, close) {
-        stack.push(JSON.parse(this.interval.contents));
+        return JSON.parse(this.interval.contents);
       }
     });
 
@@ -78,13 +75,29 @@
       }
     }
 
-    function evaluate(code) {
+    function evaluate(val) {
+      if (typeof val === 'function') {
+        // If there are any parameters, grab them off the stack directly.
+        var args = val.length > 0 ? stack.slice(-val.length) : [];
+        if (val.length > 0) {
+          var args = stack.slice(-val.length);
+          stack.length -= val.length;
+          val.apply(null, args);
+        } else {
+          val.call(null);
+        }
+      } else {
+        stack.push(val);
+      }
+    }
+
+    function readAndEvaluate(code) {
       var result = schaden.match(code);
       if (!result.succeeded()) {
         console.error(result.message);
         return false;
       }
-      semantics(result).evaluate();
+      semantics(result).value.forEach(evaluate);
       console.log(stack);
     }
 
@@ -95,7 +108,7 @@
     });
     editor.setOption('extraKeys', {
       Enter: function(cm) {
-        evaluate(cm.getLine(cm.lastLine()));
+        readAndEvaluate(cm.getLine(cm.lastLine()));
         markReadOnly = true;
         return CodeMirror.Pass;
       }

@@ -1,5 +1,9 @@
 Schaden {
-  Program = word*
+  Program = Expr*
+
+  Expr = List | word
+
+  List = "[" (~"]" Expr)* "]"
 
   word = string | number | nonWhitespaceChar+ -- other
 
