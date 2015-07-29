@@ -5,9 +5,9 @@ Schaden {
 
   List = "[" (~"]" Expr)* "]"
 
-  word = string | number | nonWhitespaceChar+ -- other
+  word = string | number | wordChar+ -- other
 
-  nonWhitespaceChar = ~space _
+  wordChar = ~(space | "[" | "]") _
 
   string
     = "\"" strChar* "\""
