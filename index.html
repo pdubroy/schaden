@@ -27,35 +27,41 @@
   <script>
     var stack = [];
     var symbols = {
-      pop: function() {
-        stack.pop();
+      pop: function(_) {},
+      '+': function(a, b) {
+        stack.push(a + b);
       },
-      '+': function() {
-        stack.push(stack.pop() + stack.pop());
+      '-': function(a, b) {
+        stack.push(a - b);
       },
-      '-': function() {
-        stack.push(stack.pop() - stack.pop());
+      '*': function(a, b) {
+        stack.push(a * b);
       },
-      '*': function() {
-        stack.push(stack.pop() * stack.pop());
-      },
-      '/': function() {
-        stack.push(stack.pop() / stack.pop());
-      },
-      '.': function() {}
+      '/': function(a, b) {
+        stack.push(a / b);
+      }
     };
 
     var schaden = ohm.grammarFromScriptElement();
     var semantics = schaden.semantics().addOperation('evaluate', {
       Program: function(words) {
-        return words.evaluate();
+        words.evaluate();
       },
       word_other: function(chars) {
         var name = this.interval.contents;
         if (!symbols.hasOwnProperty(name)) {
           throw new Error("There is no function named '" + name + "'");
         }
-        symbols[name]();
+        var fn = symbols[name];
+        // If there are any parameters, grab them off the stack directly.
+        var args = fn.length > 0 ? stack.slice(-fn.length) : [];
+        if (fn.length > 0) {
+          var args = stack.slice(-fn.length);
+          stack.length -= fn.length;
+          fn.apply(null, args);
+        } else {
+          fn.call(null);
+        }
       },
       number: function(_, digits) {
         stack.push(parseInt(this.interval.contents, 10));
