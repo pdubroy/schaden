@@ -25,13 +25,7 @@
   <script src="third_party/underscore.js"></script>
   <script type="text/ohm-js" src="schaden.ohm"></script>
   <script>
-    var STACK_CONVENTION = {};
-
-    function asWord(fn) {
-      fn.callingConvention = STACK_CONVENTION;
-      return fn;
-    }
-
+    var globals = this;
     var stack = [];
     var symbols = {
       define: function define(name, list) {
@@ -40,8 +34,11 @@
       dup: function dup(a) {
         stack.push(a, a);
       },
-      apply: function apply(fn) {
-        stack.push(fn.apply(null, stack.pop()));
+      apply: function apply(name) {
+        if (!(name in globals)) {
+          throw new Error("There's no native function named '" + name + "'");
+        }
+        stack.push(globals[name].apply(null, stack.pop()));
       },
       eval: function eval(exp) {
         exp.forEach(evaluate);
@@ -63,8 +60,6 @@
         stack.push(a / b);
       }
     };
-    _.each(symbols, asWord);
-    symbols = _.extend(this, symbols);
 
     var schaden = ohm.grammarFromScriptElement();
     var semantics = schaden.semantics().addAttribute('value', {
@@ -94,7 +89,7 @@
     }
 
     function evaluate(val) {
-      if (typeof val === 'function' && val.callingConvention === STACK_CONVENTION) {
+      if (typeof val === 'function') {
         // If there are any parameters, grab them off the stack directly.
         var args = val.length > 0 ? stack.slice(-val.length) : [];
         if (val.length > 0) {
