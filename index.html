@@ -22,7 +22,7 @@
   <textarea id="editor" autofocus></textarea>
   <script src="third_party/ohm.js"></script>
   <script src="third_party/codemirror.js"></script>
-  <script src="third_party/underscore.js"></script>
+  <script src="third_party/lodash.min.js"></script>
   <script type="text/ohm-js" src="schaden.ohm"></script>
   <script>
     var stack = [];
@@ -42,7 +42,7 @@
       },
       drop: function drop(_) {},
       dup: function dup(a) {
-        stack.push(a, a);
+        stack.push(a, _.cloneDeep(a));
       },
       take: function(a, b) {
         b.push(a);
@@ -218,10 +218,24 @@
     });
 
     // Definitions of built-in words.
-    readAndEvaluate([
+    var builtIns = [
       '"quote" [ [] take ] define',
-      '"swap" [ [] take take apply ] define'
+      '"dip" [ take apply ] define',
+      '"cons" [ [quote] dip cat ] define',
+      '"swap" [ [] take take apply ] define',
+      '"dig1" [ swap ] define',
+      '"dig2" [ [] take take take apply ] define',
+      '"dig3" [ [] take take take take apply ] define',
+      '"print" [ console .log drop ] define'
+    ];
+    builtIns.forEach(readAndEvaluate);
+
+    // Memory!
+    readAndEvaluate([
+      '["edna" "joe" "bob"]',
+      '"look" [ [dup] dip getp print ] define'
     ].join(' '));
+
 
 //    setEditorValueFromLocalStorage(editor, 'editorContents');
   </script>
