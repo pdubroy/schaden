@@ -5,7 +5,14 @@ Schaden {
 
   List = "[" (~"]" Expr)* "]"
 
-  atom = string | number | word
+  atom = string | number | memberExpr | word
+
+  memberExpr = ("." identifier)+
+
+  // ES5 identifiers, but restricted to ASCII characters.
+  identifier = identifierStart identifierPart*
+  identifierStart = letter | "$" | "_"
+  identifierPart = identifierStart | digit | "_"
 
   word = wordChar+
 
