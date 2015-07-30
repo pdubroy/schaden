@@ -175,11 +175,9 @@
         } else {
           // It's a native function -- args are on the top of the stack.
           var args = stack.pop();
-          if (Array.isArray(args)) {
-            val.apply(null, args);
-          } else {
-            val.call(null, args);
-          }
+          var result = Array.isArray(args) ? val.apply(null, args)
+                                           : val.call(null, args);
+          evaluate(result);
         }
       } else {
         stack.push(val);
