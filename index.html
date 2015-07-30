@@ -30,25 +30,36 @@
     // The built-in environment. It inherits from `window` so that native
     // functions like console.log are accessible.
     var symbols = _.create(this, {
+      // Kernel words
+      apply: function(quotation) {
+        quotation.forEach(evaluate);
+      },
+      cat: function cat(a, b) {
+        stack.push(a.concat(b));
+      },
       define: function define(name, list) {
         symbols[name] = asWord(function() { list.forEach(evaluate); });
       },
+      drop: function drop(_) {},
       dup: function dup(a) {
         stack.push(a, a);
       },
-      eval: function eval(exp) {
-        exp.forEach(evaluate);
-      },
-      getp: function getp(receiver, name) {
-        stack.push(receiver[name]);
-      },
-      pop: function pop(_) {},
-      print: function print(str) {
-        console.log(str);
+      quote: function quote(a) {
+        stack.push([a]);
       },
       swap: function swap(a, b) {
         stack.push(b, a);
       },
+
+      // Getting and setting JavaScript properties.
+      getp: function getp(receiver, name) {
+        stack.push(receiver[name]);
+      },
+      setp: function setp(receiver, name, value) {
+        receiver[name] = value;
+      },
+
+      // Arithmetic operators
       '+': function plus(a, b) {
         stack.push(a + b);
       },
@@ -60,6 +71,37 @@
       },
       '/': function div(a, b) {
         stack.push(a / b);
+      },
+      '%': function div(a, b) {
+        stack.push(a / b);
+      },
+
+      // Relational operators
+      '<': function(a, b) {
+        stack.push(a < b);
+      },
+      '<=': function(a, b) {
+        stack.push(a <= b);
+      },
+      '>=': function(a, b) {
+        stack.push(a >= b);
+      },
+      '>': function(a, b) {
+        stack.push(a > b);
+      },
+
+      // Equality operators
+      '==': function(a, b) {
+        stack.push(a == b);
+      },
+      '!=': function(a, b) {
+        stack.push(a != b);
+      },
+      '===': function(a, b) {
+        stack.push(a === b);
+      },
+      '!==': function(a, b) {
+        stack.push(a !== b);
       }
     });
 
