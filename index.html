@@ -30,12 +30,6 @@
     // The built-in environment. It inherits from `window` so that native
     // functions like console.log are accessible.
     var symbols = _.create(this, {
-      apply: function apply(name) {
-        if (!(name in globals)) {
-          throw new Error("There's no native function named '" + name + "'");
-        }
-        stack.push(globals[name].apply(null, stack.pop()));
-      },
       define: function define(name, list) {
         symbols[name] = asWord(function() { list.forEach(evaluate); });
       },
@@ -99,7 +93,12 @@
           if (!(name in obj)) {
             throw new Error("Object " + obj + " has no property named '" + name + "'");
           }
-          evaluate(obj[name]);
+          var val = obj[name];
+          // If it's a function, `bind` it to whatever object it came from.
+          if (typeof val === 'function') {
+            val = val.bind(obj);
+          }
+          evaluate(val);
         });
       },
       identifier: function(start, rest) {
@@ -122,15 +121,25 @@
     }
 
     function evaluate(val) {
-      if (typeof val === 'function' && val._isWord === true) {
-        // If there are any parameters, grab them off the stack directly.
-        var args = val.length > 0 ? stack.slice(-val.length) : [];
-        if (val.length > 0) {
-          var args = stack.slice(-val.length);
-          stack.length -= val.length;
-          val.apply(null, args);
+      if (typeof val === 'function') {
+        if (val._isWord === true) {
+          // If there are any parameters, grab them off the stack directly.
+          var args = val.length > 0 ? stack.slice(-val.length) : [];
+          if (val.length > 0) {
+            var args = stack.slice(-val.length);
+            stack.length -= val.length;
+            val.apply(null, args);
+          } else {
+            val.call(null);
+          }
         } else {
-          val.call(null);
+          // It's a native function -- args are on the top of the stack.
+          var args = stack.pop();
+          if (Array.isArray(args)) {
+            val.apply(null, args);
+          } else {
+            val.call(null, args);
+          }
         }
       } else {
         stack.push(val);
