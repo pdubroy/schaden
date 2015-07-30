@@ -30,7 +30,7 @@
     // The built-in environment. It inherits from `window` so that native
     // functions like console.log are accessible.
     var symbols = _.create(this, {
-      // Kernel words
+      // Kernel words.
       apply: function(quotation) {
         quotation.forEach(evaluate);
       },
@@ -44,11 +44,9 @@
       dup: function dup(a) {
         stack.push(a, a);
       },
-      quote: function quote(a) {
-        stack.push([a]);
-      },
-      swap: function swap(a, b) {
-        stack.push(b, a);
+      take: function(a, b) {
+        b.push(a);
+        stack.push(b);
       },
 
       // Getting and setting JavaScript properties.
@@ -220,6 +218,12 @@
       }
       localStorage.setItem('editorContents', editor.getValue());
     });
+
+    // Definitions of built-in words.
+    readAndEvaluate([
+      '"quote" [ [] take ] define',
+      '"swap" [ [] take take apply ] define'
+    ].join(' '));
 
 //    setEditorValueFromLocalStorage(editor, 'editorContents');
   </script>
