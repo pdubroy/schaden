@@ -52,6 +52,11 @@
         b.push(a);
         stack.push(b);
       },
+      times: function(n, quotation) {
+        for (var i = 0; i < n; ++i) {
+          quotation.forEach(evaluate);
+        }
+      },
 
       // Getting and setting JavaScript properties.
       getp: function getp(receiver, name) {
@@ -233,16 +238,17 @@
       '"over" [ [dup] dip swap ] define',
       '"print" [ console .log drop ] define',
       '"split" (l i -- l1 l2) [ [] take take dup apply swap [0] take swap .slice [apply swap quote swap .slice] dip swap ] define',
-      '"remove" (l i -- lprime x) [ dup [0] take swap .slice ] define'  // Remove element at index `i` from the list `l`.
+      '"remove" (l i -- lprime x) [ split 1 split swap [cat] dip apply ] define',  // Remove element at index `i` from the list `l`.
     ];
     builtIns.forEach(readAndEvaluate);
 
     // Memory!
     [
-      '["edna" "joe" "bob"]',
+      '["edna" "joe" "bob" "robbie" "janie" "hans" "ruby"]',
       '"look" [ [dup] dip getp print ] define', // Look at a card
       '"rand" (l -- i) [ dup .length [] Math .random * Math .floor ] define', // Pick a random index `i` from the list `l`.
-      '"shuffle" [ dup rand split ] define' // Shuffle the deck
+      '"select1" [ rand remove quote ] define', // Select one card at random from the deck, and quote it.
+      '"shuffle" [ select1 6 [[select1] dip cat] times cat ] define'
     ].forEach(readAndEvaluate);
 
 
