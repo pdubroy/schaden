@@ -26,6 +26,10 @@
   <script type="text/ohm-js" src="schaden.ohm"></script>
   <script>
     var stack = [];
+    var origPush = stack.push;
+    stack.push = function() {
+      origPush.apply(this, arguments);
+    };
 
     // The built-in environment. It inherits from `window` so that native
     // functions like console.log are accessible.
@@ -117,9 +121,9 @@
     }
 
     var schaden = ohm.grammarFromScriptElement();
-    var semantics = schaden.semantics().addAttribute('value', {
+    var semantics = schaden.semantics().addOperation('value', {
       List: function(open, words, close) {
-        return words.value;
+        return words.value();
       },
       string: function(open, chars, close) {
         return JSON.parse(this.interval.contents);
@@ -128,7 +132,7 @@
         return parseInt(this.interval.contents, 10);
       },
       memberExpr: function(_, id) {
-        var name = id.value;
+        var name = id.value();
         return asWord(function(obj) {
           if (!(name in obj)) {
             throw new Error("Object " + obj + " has no property named '" + name + "'");
@@ -180,7 +184,7 @@
           evaluate(result);
         }
       } else {
-        stack.push(val);
+        stack.push(Array.isArray(val) ? _.cloneDeep(val) : val);
       }
     }
 
@@ -190,8 +194,8 @@
         console.error(result.message);
         return false;
       }
-      semantics(result).value.forEach(evaluate);
-      console.log(stack);
+      semantics(result).value().forEach(evaluate);
+      console.log(JSON.stringify(stack));
     }
 
     var markReadOnly = false;
@@ -226,15 +230,20 @@
       '"dig1" [ swap ] define',
       '"dig2" [ [] take take take apply ] define',
       '"dig3" [ [] take take take take apply ] define',
-      '"print" [ console .log drop ] define'
+      '"over" [ [dup] dip swap ] define',
+      '"print" [ console .log drop ] define',
+      '"split" (l i -- l1 l2) [ [] take take dup apply swap [0] take swap .slice [apply swap quote swap .slice] dip swap ] define',
+      '"remove" (l i -- lprime x) [ dup [0] take swap .slice ] define'  // Remove element at index `i` from the list `l`.
     ];
     builtIns.forEach(readAndEvaluate);
 
     // Memory!
-    readAndEvaluate([
+    [
       '["edna" "joe" "bob"]',
-      '"look" [ [dup] dip getp print ] define'
-    ].join(' '));
+      '"look" [ [dup] dip getp print ] define', // Look at a card
+      '"rand" (l -- i) [ dup .length [] Math .random * Math .floor ] define', // Pick a random index `i` from the list `l`.
+      '"shuffle" [ dup rand split ] define' // Shuffle the deck
+    ].forEach(readAndEvaluate);
 
 
 //    setEditorValueFromLocalStorage(editor, 'editorContents');
