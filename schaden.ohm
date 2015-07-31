@@ -36,5 +36,5 @@ Schaden {
 	number  (a number)
     = "-"? digit+
 
-	space += "#" (~"\n" _)* "\n"  -- comment
+	space += "(" (~")" _)* ")"  -- comment
 }
